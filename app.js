@@ -1,4 +1,4 @@
-// Mini Crossword — fully fixed iPhone keyboard + clear selection + dark mode
+// Mini Crossword — iPhone keyboard + clear selection + auto-finish + dark mode
 const SIZE = 5;
 const gridEl = document.getElementById("grid");
 const acrossList = document.getElementById("acrossList");
@@ -25,6 +25,7 @@ const actions = {
 let puzzle=null, cells=[], state=[], solution=[], numbers=[], clues={across:[],down:[]};
 let cursor={idx:0, dir:"across"};
 let startedAt=null, timerId=0;
+let finished = false; // NEW: puzzle solved state
 
 const isLetter = c => /^[A-Za-z]$/.test(c);
 const idxRC = (r,c) => r*SIZE + c;
@@ -37,8 +38,7 @@ function focusMobileInput() {
   mobileInput.value = "";
   mobileInput.focus({ preventScroll: true });
 }
-
-function placeMobileInputAtCell(idx) {
+function placeMobileInputAtCell(idx){
   if (!isTouch) return;
   const cell = cells[idx];
   if (!cell) return;
@@ -46,7 +46,7 @@ function placeMobileInputAtCell(idx) {
   // Use fixed positioning so Safari treats it as stable
   mobileInput.style.position = "fixed";
   mobileInput.style.left = rect.left + 8 + "px";
-  mobileInput.style.top = rect.top + 8 + "px";
+  mobileInput.style.top  = rect.top + 8 + "px";
 }
 
 // === INIT ===
@@ -134,6 +134,7 @@ function renderLetters(){
     cell.appendChild(span);
   });
   highlightCurrentWord();
+  maybeFinish(); // NEW: check completion after any render
 }
 
 function buildClues(){
@@ -191,6 +192,7 @@ function wireEvents(){
     }
   });
 
+  // iPhone input
   mobileInput.addEventListener("input",(e)=>{
     const ch = mobileInput.value.toUpperCase();
     if (/^[A-Z]$/.test(ch)) { handleInput(ch); mobileInput.value=""; }
@@ -229,6 +231,8 @@ function wireEvents(){
 }
 
 // === Selection and movement ===
+function toggleDir(){ cursor.dir = (cursor.dir==="across") ? "down" : "across"; highlightCurrentWord(); }
+
 function setSelection(idx){
   if (solution[idx]==="#") idx = nextFillableIndex(idx);
   cursor.idx = idx;
@@ -279,6 +283,7 @@ function markActiveClue(){
 }
 
 function handleInput(ch){
+  if (finished) return; // NEW: block input after finish
   if (solution[cursor.idx]==="#") return;
   state[cursor.idx]=ch;
   renderLetters();
@@ -286,6 +291,7 @@ function handleInput(ch){
 }
 
 function backspace(){
+  if (finished) return; // NEW: block input after finish
   if (solution[cursor.idx]==="#") return;
   if (state[cursor.idx]) state[cursor.idx]="";
   else retreat();
@@ -338,15 +344,26 @@ function checkPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#") pai
 function revealLetter(){ if (solution[cursor.idx]!=="#"){ state[cursor.idx]=solution[cursor.idx]; renderLetters(); } }
 function revealWord(){ for (const i of cellSpan(cursor.idx)) if (solution[i]!=="#") state[i]=solution[i]; renderLetters(); }
 function revealPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#") state[i]=solution[i]; renderLetters(); }
-function resetPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#"){ state[i]=""; cells[i].style.background=""; } renderLetters(); }
+
+function resetPuzzle(){
+  finished = false; // NEW
+  for (let i=0;i<SIZE*SIZE;i++)
+    if (solution[i]!=="#"){ state[i]=""; cells[i].style.background=""; }
+  renderLetters();
+  startTimer();     // NEW: restart clock
+}
 
 function paintCell(i, ok){
   cells[i].style.background = ok ? "var(--correct)" : "var(--wrong)";
   setTimeout(()=>{ cells[i].style.background=""; }, 260);
 }
 
-// === Timer ===
+// === Timer & Finish ===
+function stopTimer(){
+  if (timerId) { clearInterval(timerId); timerId = 0; }
+}
 function startTimer(){
+  stopTimer();                     // ensure single interval
   startedAt = Date.now();
   timerId = setInterval(()=>{
     const s = Math.floor((Date.now()-startedAt)/1000);
@@ -354,6 +371,20 @@ function startTimer(){
     const ss = String(s%60).padStart(2,"0");
     timerEl.textContent = `${m}:${ss}`;
   }, 250);
+}
+function isSolved(){
+  for (let i=0;i<solution.length;i++){
+    if (solution[i]==="#") continue;
+    if (state[i]!==solution[i]) return false;
+  }
+  return true;
+}
+function maybeFinish(){
+  if (finished) return;
+  if (!isSolved()) return;
+  finished = true;
+  stopTimer();
+  setTimeout(()=>{ alert(`Puzzle complete! Time: ${timerEl.textContent}`); }, 50);
 }
 
 // === Share ===
