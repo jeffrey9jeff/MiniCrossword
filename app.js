@@ -31,13 +31,16 @@ const rcFromIdx = idx => [Math.floor(idx/SIZE), idx%SIZE];
 
 (async function init(){
   try {
+    // Works at /MiniCrossword/ and locally
     const base = window.location.pathname.endsWith("/")
       ? window.location.pathname
       : window.location.pathname + "/";
     const PUZZLE_URL = `${base}puzzles/today.json`;
+
     const res = await fetch(PUZZLE_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Failed to load ${PUZZLE_URL}`);
+    if (!res.ok) throw new Error(`Failed to load ${PUZZLE_URL} (${res.status})`);
     puzzle = await res.json();
+
     titleEl.textContent = `${puzzle.title} — ${puzzle.date}`;
     buildModel(); buildGrid(); buildClues(); buildKeypad(); wireEvents(); startTimer();
   } catch (err) {
