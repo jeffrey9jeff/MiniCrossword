@@ -18,6 +18,19 @@
 
   <main class="layout" role="main">
     <section class="grid-wrap">
+      <!-- Hidden input to trigger iPhone keyboard -->
+      <input
+        id="mobileInput"
+        type="text"
+        inputmode="latin"
+        autocapitalize="characters"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+        maxlength="1"
+        aria-hidden="true"
+      />
+
       <div id="grid" class="grid" role="grid" aria-label="Crossword grid"></div>
 
       <div class="actions">
@@ -54,7 +67,6 @@
     <span id="puzzleTitle"></span>
   </footer>
 
-  <!-- bump version to bust cache -->
-  <script src="app.js?v=7"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>
