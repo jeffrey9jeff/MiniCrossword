@@ -30,15 +30,21 @@ const idxRC = (r,c) => r*SIZE + c;
 const rcFromIdx = idx => [Math.floor(idx/SIZE), idx%SIZE];
 
 (async function init(){
-  const res = await fetch("puzzles/today.json", {cache:"no-store"});
-  puzzle = await res.json();
-  titleEl.textContent = `${puzzle.title} — ${puzzle.date}`;
-  buildModel();
-  buildGrid();
-  buildClues();
-  buildKeypad();
-  wireEvents();
-  startTimer();
+  try {
+    const base = window.location.pathname.endsWith("/")
+      ? window.location.pathname
+      : window.location.pathname + "/";
+    const PUZZLE_URL = `${base}puzzles/today.json`;
+    const res = await fetch(PUZZLE_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`Failed to load ${PUZZLE_URL}`);
+    puzzle = await res.json();
+    titleEl.textContent = `${puzzle.title} — ${puzzle.date}`;
+    buildModel(); buildGrid(); buildClues(); buildKeypad(); wireEvents(); startTimer();
+  } catch (err) {
+    console.error("Puzzle load failed:", err);
+    document.getElementById("grid").innerHTML =
+      "<div style='padding:1rem'>Could not load puzzles/today.json — check file path & name.</div>";
+  }
 })();
 
 function buildModel(){
