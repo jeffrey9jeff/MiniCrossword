@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini Crossword</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="theme-color" content="#ffffff"/>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Mini Crossword</div>
+    <div class="controls">
+      <button id="darkToggle" aria-pressed="false" title="Toggle dark mode">🌓</button>
+      <div class="timer" aria-live="polite" id="timer">0:00</div>
+    </div>
+  </header>
+
+  <main class="layout" role="main">
+    <section class="grid-wrap">
+      <div id="grid" class="grid" role="grid" aria-label="Crossword grid"></div>
+
+      <div class="actions">
+        <button id="checkLetter">Check Letter</button>
+        <button id="checkWord">Check Word</button>
+        <button id="checkPuzzle">Check Puzzle</button>
+        <button id="revealLetter">Reveal Letter</button>
+        <button id="revealWord">Reveal Word</button>
+        <button id="revealPuzzle">Reveal Puzzle</button>
+        <button id="resetPuzzle">Reset</button>
+        <button id="shareResult">Share</button>
+      </div>
+
+      <div id="keypad" class="keypad" aria-label="On-screen keypad">
+        <div class="keys"></div>
+      </div>
+    </section>
+
+    <section class="clues">
+      <div class="row">
+        <div class="col">
+          <h2>Across</h2>
+          <ol id="acrossList" class="clue-list"></ol>
+        </div>
+        <div class="col">
+          <h2>Down</h2>
+          <ol id="downList" class="clue-list"></ol>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span id="puzzleTitle"></span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
