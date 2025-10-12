@@ -1,4 +1,4 @@
-// Mini Crossword — with iPhone native keyboard and selection highlight
+// Mini Crossword — fully fixed iPhone keyboard + clear selection + dark mode
 const SIZE = 5;
 const gridEl = document.getElementById("grid");
 const acrossList = document.getElementById("acrossList");
@@ -31,19 +31,22 @@ const idxRC = (r,c) => r*SIZE + c;
 const rcFromIdx = idx => [Math.floor(idx/SIZE), idx%SIZE];
 const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
-// === iPhone Keyboard Helpers ===
+// === iPhone keyboard helpers ===
 function focusMobileInput() {
   if (!isTouch) return;
   mobileInput.value = "";
   mobileInput.focus({ preventScroll: true });
 }
-function placeMobileInputAtCell(idx){
+
+function placeMobileInputAtCell(idx) {
   if (!isTouch) return;
   const cell = cells[idx];
   if (!cell) return;
   const rect = cell.getBoundingClientRect();
-  mobileInput.style.left = (window.scrollX + rect.left + 8) + "px";
-  mobileInput.style.top  = (window.scrollY + rect.top + 8) + "px";
+  // Use fixed positioning so Safari treats it as stable
+  mobileInput.style.position = "fixed";
+  mobileInput.style.left = rect.left + 8 + "px";
+  mobileInput.style.top = rect.top + 8 + "px";
 }
 
 // === INIT ===
@@ -67,7 +70,9 @@ function placeMobileInputAtCell(idx){
   } catch (err) {
     console.error("[Mini] Failed to load puzzle:", err);
     gridEl.innerHTML =
-      `<div style="padding:1rem">Could not load puzzles/today.json. Check file path.</div>`;
+      `<div style="padding:1rem;max-width:24rem">
+        Could not load <code>puzzles/today.json</code>. Check file path/case.
+       </div>`;
     return;
   }
 
@@ -223,6 +228,7 @@ function wireEvents(){
   });
 }
 
+// === Selection and movement ===
 function setSelection(idx){
   if (solution[idx]==="#") idx = nextFillableIndex(idx);
   cursor.idx = idx;
@@ -230,7 +236,15 @@ function setSelection(idx){
   if (idx>=0){
     cells[idx].setAttribute("aria-selected","true");
     placeMobileInputAtCell(idx);
-    focusMobileInput();
+    // delay focus to keep iPhone keyboard open
+    if (isTouch) {
+      clearTimeout(setSelection._focusTimer);
+      setSelection._focusTimer = setTimeout(() => {
+        mobileInput.focus({ preventScroll: true });
+      }, 120);
+    } else {
+      focusMobileInput();
+    }
   }
   highlightCurrentWord();
 }
@@ -264,54 +278,98 @@ function markActiveClue(){
   if (item) item.classList.add("active");
 }
 
-function handleInput(ch){ if (solution[cursor.idx]==="#") return;
-  state[cursor.idx]=ch; renderLetters(); advance(); }
-function backspace(){ if (solution[cursor.idx]==="#") return;
-  if (state[cursor.idx]) state[cursor.idx]=""; else retreat(); renderLetters(); }
+function handleInput(ch){
+  if (solution[cursor.idx]==="#") return;
+  state[cursor.idx]=ch;
+  renderLetters();
+  advance();
+}
 
-function move(dr,dc){ const [r,c]=rcFromIdx(cursor.idx);
-  const nr=r+dr, nc=c+dc; if (nr<0||nc<0||nr>=SIZE||nc>=SIZE)return;
-  setSelection(idxRC(nr,nc)); focusMobileInput(); }
+function backspace(){
+  if (solution[cursor.idx]==="#") return;
+  if (state[cursor.idx]) state[cursor.idx]="";
+  else retreat();
+  renderLetters();
+}
 
-function advance(){ const word=cellSpan(cursor.idx);
-  const pos=word.indexOf(cursor.idx);
-  if(pos<word.length-1)setSelection(word[pos+1]);else nextWord(); focusMobileInput();}
-function retreat(){ const word=cellSpan(cursor.idx);
-  const pos=word.indexOf(cursor.idx);
-  if(pos>0)setSelection(word[pos-1]); focusMobileInput();}
-function nextWord(){ const dir=cursor.dir;
-  for(let i=cursor.idx+1;i<SIZE*SIZE;i++){if(isWordStart(i,dir)){setSelection(i);focusMobileInput();return;}}
-  for(let i=0;i<cursor.idx;i++){if(isWordStart(i,dir)){setSelection(i);focusMobileInput();return;}}}
-function prevWord(){ const dir=cursor.dir;
-  for(let i=cursor.idx-1;i>=0;i--){if(isWordStart(i,dir)){setSelection(i);focusMobileInput();return;}}}
-function isWordStart(i,dir){ if(solution[i]==="#")return false;
-  const [r,c]=rcFromIdx(i); if(dir==="across")return c===0||solution[idxRC(r,c-1)]==="#";
-  return r===0||solution[idxRC(r-1,c)]==="#"; }
-function nextFillableIndex(i){ for(let k=i+1;k<SIZE*SIZE;k++)if(solution[k]!=="#")return k;
-  for(let k=0;k<i;k++)if(solution[k]!=="#")return k; return -1; }
+function move(dr,dc){
+  const [r,c]=rcFromIdx(cursor.idx);
+  const nr=r+dr, nc=c+dc;
+  if (nr<0||nc<0||nr>=SIZE||nc>=SIZE) return;
+  setSelection(idxRC(nr,nc));
+}
+
+function advance(){
+  const word = cellSpan(cursor.idx);
+  const pos = word.indexOf(cursor.idx);
+  if (pos < word.length-1) setSelection(word[pos+1]); else nextWord();
+}
+function retreat(){
+  const word = cellSpan(cursor.idx);
+  const pos = word.indexOf(cursor.idx);
+  if (pos > 0) setSelection(word[pos-1]);
+}
+function nextWord(){
+  const dir = cursor.dir;
+  for (let i=cursor.idx+1;i<SIZE*SIZE;i++){ if (isWordStart(i,dir)) { setSelection(i); return; } }
+  for (let i=0;i<cursor.idx;i++){ if (isWordStart(i,dir)) { setSelection(i); return; } }
+}
+function prevWord(){
+  const dir = cursor.dir;
+  for (let i=cursor.idx-1;i>=0;i--){ if (isWordStart(i,dir)) { setSelection(i); return; } }
+}
+function isWordStart(i,dir){
+  if (solution[i]==="#") return false;
+  const [r,c]=rcFromIdx(i);
+  if (dir==="across") return c===0 || solution[idxRC(r,c-1)]==="#";
+  return r===0 || solution[idxRC(r-1,c)]==="#";
+}
+function nextFillableIndex(i){
+  for (let k=i+1;k<SIZE*SIZE;k++) if (solution[k]!=="#") return k;
+  for (let k=0;k<i;k++) if (solution[k]!=="#") return k;
+  return -1;
+}
 function firstFillableIndex(){ return nextFillableIndex(-1); }
 
-function checkLetter(){ if(solution[cursor.idx]!=="#")paintCell(cursor.idx,state[cursor.idx]===solution[cursor.idx]); }
-function checkWord(){ for(const i of cellSpan(cursor.idx))if(solution[i]!=="#")paintCell(i,state[i]===solution[i]); }
-function checkPuzzle(){ for(let i=0;i<SIZE*SIZE;i++)if(solution[i]!=="#")paintCell(i,state[i]===solution[i]); }
-function revealLetter(){ if(solution[cursor.idx]!=="#"){state[cursor.idx]=solution[cursor.idx];renderLetters();} }
-function revealWord(){ for(const i of cellSpan(cursor.idx))if(solution[i]!=="#")state[i]=solution[i];renderLetters(); }
-function revealPuzzle(){ for(let i=0;i<SIZE*SIZE;i++)if(solution[i]!=="#")state[i]=solution[i];renderLetters(); }
-function resetPuzzle(){ for(let i=0;i<SIZE*SIZE;i++)if(solution[i]!=="#"){state[i]="";cells[i].style.background="";}renderLetters(); }
+// === Checks, reveals, resets ===
+function checkLetter(){ if (solution[cursor.idx]!=="#") paintCell(cursor.idx, state[cursor.idx]===solution[cursor.idx]); }
+function checkWord(){ for (const i of cellSpan(cursor.idx)) if (solution[i]!=="#") paintCell(i, state[i]===solution[i]); }
+function checkPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#") paintCell(i, state[i]===solution[i]); }
+function revealLetter(){ if (solution[cursor.idx]!=="#"){ state[cursor.idx]=solution[cursor.idx]; renderLetters(); } }
+function revealWord(){ for (const i of cellSpan(cursor.idx)) if (solution[i]!=="#") state[i]=solution[i]; renderLetters(); }
+function revealPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#") state[i]=solution[i]; renderLetters(); }
+function resetPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#"){ state[i]=""; cells[i].style.background=""; } renderLetters(); }
 
-function paintCell(i,ok){ cells[i].style.background=ok?"var(--correct)":"var(--wrong)";
-  setTimeout(()=>{cells[i].style.background="";},260); }
+function paintCell(i, ok){
+  cells[i].style.background = ok ? "var(--correct)" : "var(--wrong)";
+  setTimeout(()=>{ cells[i].style.background=""; }, 260);
+}
 
-function startTimer(){ startedAt=Date.now();
-  timerId=setInterval(()=>{const s=Math.floor((Date.now()-startedAt)/1000);
-  const m=Math.floor(s/60);const ss=String(s%60).padStart(2,"0");
-  timerEl.textContent=`${m}:${ss}`;},250); }
+// === Timer ===
+function startTimer(){
+  startedAt = Date.now();
+  timerId = setInterval(()=>{
+    const s = Math.floor((Date.now()-startedAt)/1000);
+    const m = Math.floor(s/60);
+    const ss = String(s%60).padStart(2,"0");
+    timerEl.textContent = `${m}:${ss}`;
+  }, 250);
+}
 
-async function share(){ const em=[];
-  for(let r=0;r<SIZE;r++){let row="";for(let c=0;c<SIZE;c++){const i=idxRC(r,c);
-    if(solution[i]==="#")row+="⬛";else if(!state[i])row+="⬜";
-    else row+=(state[i]===solution[i])?"🟩":"🟨";}em.push(row);}
-  const text=`Mini Crossword — ${puzzle.date}\n${timerEl.textContent}\n`+em.join("\n");
-  try{await navigator.clipboard.writeText(text);alert("Result copied to clipboard!");}
-  catch(e){prompt("Copy your result:",text);}
+// === Share ===
+async function share(){
+  const em=[];
+  for (let r=0;r<SIZE;r++){
+    let row="";
+    for (let c=0;c<SIZE;c++){
+      const i=idxRC(r,c);
+      if (solution[i]==="#") row+="⬛";
+      else if (!state[i]) row+="⬜";
+      else row += (state[i]===solution[i])?"🟩":"🟨";
+    }
+    em.push(row);
+  }
+  const text = `Mini Crossword — ${puzzle.date}\n${timerEl.textContent}\n` + em.join("\n");
+  try { await navigator.clipboard.writeText(text); alert("Result copied to clipboard!"); }
+  catch(e){ prompt("Copy your result:", text); }
 }
