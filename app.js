@@ -1,4 +1,4 @@
-// Mini Crossword — iPhone keyboard + selection highlight version
+// Mini Crossword — with iPhone native keyboard and selection highlight
 const SIZE = 5;
 const gridEl = document.getElementById("grid");
 const acrossList = document.getElementById("acrossList");
@@ -31,7 +31,7 @@ const idxRC = (r,c) => r*SIZE + c;
 const rcFromIdx = idx => [Math.floor(idx/SIZE), idx%SIZE];
 const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 
-// --- iPhone keyboard helpers ---
+// === iPhone Keyboard Helpers ===
 function focusMobileInput() {
   if (!isTouch) return;
   mobileInput.value = "";
@@ -42,12 +42,11 @@ function placeMobileInputAtCell(idx){
   const cell = cells[idx];
   if (!cell) return;
   const rect = cell.getBoundingClientRect();
-  const host = gridEl.getBoundingClientRect();
-  mobileInput.style.left = (window.scrollX + host.left + rect.left - host.left + 6) + "px";
-  mobileInput.style.top  = (window.scrollY + host.top  + rect.top  - host.top  + 6) + "px";
+  mobileInput.style.left = (window.scrollX + rect.left + 8) + "px";
+  mobileInput.style.top  = (window.scrollY + rect.top + 8) + "px";
 }
 
-// === INIT ====================================================
+// === INIT ===
 (async function init(){
   function getPuzzleUrl() {
     const isGH = location.hostname.endsWith(".github.io");
@@ -60,27 +59,21 @@ function placeMobileInputAtCell(idx){
   }
 
   const PUZZLE_URL = `${getPuzzleUrl()}?v=${Date.now()}`;
-  console.log("[Mini] Fetching puzzle from", PUZZLE_URL);
 
   try {
     const res = await fetch(PUZZLE_URL, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     puzzle = await res.json();
-    console.log("[Mini] Loaded:", puzzle.title, puzzle.date);
   } catch (err) {
     console.error("[Mini] Failed to load puzzle:", err);
-    document.getElementById("grid").innerHTML =
-      `<div style="padding:1rem;max-width:24rem">
-        Could not load <code>puzzles/today.json</code>.
-        Check the path/case in your repo.
-       </div>`;
+    gridEl.innerHTML =
+      `<div style="padding:1rem">Could not load puzzles/today.json. Check file path.</div>`;
     return;
   }
 
   titleEl.textContent = `${puzzle.title} — ${puzzle.date}`;
   buildModel(); buildGrid(); buildClues(); buildKeypad(); wireEvents(); startTimer();
 })();
-// =============================================================
 
 function buildModel(){
   const grid = puzzle.grid.map(r => r.map(ch => ch==="#" ? "#" : ch.toUpperCase()));
@@ -200,6 +193,14 @@ function wireEvents(){
   mobileInput.addEventListener("beforeinput",(e)=>{
     if (e.inputType==="deleteContentBackward"){ backspace(); e.preventDefault(); }
   });
+
+  if (isTouch) {
+    gridEl.addEventListener("touchstart", () => { focusMobileInput(); }, { passive: true });
+    window.addEventListener("orientationchange", () => setTimeout(focusMobileInput, 250));
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) setTimeout(focusMobileInput, 100);
+    });
+  }
 
   document.querySelectorAll(".clue").forEach(li=>{
     li.addEventListener("click", ()=> {
