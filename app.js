@@ -29,27 +29,40 @@ const isLetter = c => /^[A-Za-z]$/.test(c);
 const idxRC = (r,c) => r*SIZE + c;
 const rcFromIdx = idx => [Math.floor(idx/SIZE), idx%SIZE];
 
+// === INIT ====================================================
 (async function init(){
-  try {
-    // Always works on GitHub Pages for jeffrey9jeff.github.io/MiniCrossword/
-    const PUZZLE_URL = "https://jeffrey9jeff.github.io/MiniCrossword/puzzles/today.json";
-    const res = await fetch(PUZZLE_URL, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Failed to load ${PUZZLE_URL} (${res.status})`);
-
-    puzzle = await res.json();
-    titleEl.textContent = `${puzzle.title} — ${puzzle.date}`;
-    buildModel();
-    buildGrid();
-    buildClues();
-    buildKeypad();
-    wireEvents();
-    startTimer();
-  } catch (err) {
-    console.error("Puzzle load failed:", err);
-    document.getElementById("grid").innerHTML =
-      "<div style='padding:1rem'>Could not load puzzles/today.json — check file path & name.</div>";
+  function getPuzzleUrl() {
+    const isGH = location.hostname.endsWith(".github.io");
+    if (isGH) {
+      const segs = location.pathname.split("/").filter(Boolean);
+      const repo = segs[0] ? `/${segs[0]}` : "";
+      return `${repo}/puzzles/today.json`;
+    }
+    return "puzzles/today.json";
   }
+
+  const PUZZLE_URL = `${getPuzzleUrl()}?v=${Date.now()}`;
+  console.log("[Mini] Fetching puzzle from", PUZZLE_URL);
+
+  try {
+    const res = await fetch(PUZZLE_URL, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    puzzle = await res.json();
+    console.log("[Mini] Loaded:", puzzle.title, puzzle.date);
+  } catch (err) {
+    console.error("[Mini] Failed to load puzzle:", err);
+    document.getElementById("grid").innerHTML =
+      `<div style="padding:1rem;max-width:24rem">
+        Could not load <code>puzzles/today.json</code>.
+        Check the path/case in your repo.
+       </div>`;
+    return;
+  }
+
+  titleEl.textContent = `${puzzle.title} — ${puzzle.date}`;
+  buildModel(); buildGrid(); buildClues(); buildKeypad(); wireEvents(); startTimer();
 })();
+// =============================================================
 
 function buildModel(){
   const grid = puzzle.grid.map(r => r.map(ch => ch==="#" ? "#" : ch.toUpperCase()));
@@ -160,7 +173,7 @@ function wireEvents(){
       case "Tab": e.shiftKey? prevWord(): nextWord(); e.preventDefault(); break;
     }
   });
-  [...document.querySelectorAll(".clue")].forEach(li=>{
+  document.querySelectorAll(".clue").forEach(li=>{
     li.addEventListener("click", ()=> {
       cursor.dir = li.dataset.dir;
       setSelection(parseInt(li.dataset.start,10));
@@ -187,6 +200,7 @@ function setSelection(idx){
   if (idx>=0) cells[idx].setAttribute("aria-selected","true");
   highlightCurrentWord();
 }
+
 function cellSpan(idx){
   const [r,c] = rcFromIdx(idx);
   const dir = cursor.dir;
@@ -201,11 +215,13 @@ function cellSpan(idx){
   }
   return out;
 }
+
 function highlightCurrentWord(){
   cells.forEach(c=> c.classList.remove("highlight"));
   for (const i of cellSpan(cursor.idx)) cells[i].classList.add("highlight");
   markActiveClue();
 }
+
 function markActiveClue(){
   const start = cellSpan(cursor.idx)[0];
   document.querySelectorAll(".clue").forEach(c=> c.classList.remove("active"));
@@ -213,24 +229,28 @@ function markActiveClue(){
   const item = [...list.children].find(li => parseInt(li.dataset.start,10)===start);
   if (item) item.classList.add("active");
 }
+
 function handleInput(ch){
   if (solution[cursor.idx]==="#") return;
   state[cursor.idx] = ch;
   renderLetters();
   advance();
 }
+
 function backspace(){
   if (solution[cursor.idx]==="#") return;
   if (state[cursor.idx]) state[cursor.idx] = "";
   else retreat();
   renderLetters();
 }
+
 function move(dr,dc){
   const [r,c]=rcFromIdx(cursor.idx);
   const nr=r+dr, nc=c+dc;
   if (nr<0||nc<0||nr>=SIZE||nc>=SIZE) return;
   setSelection(idxRC(nr,nc));
 }
+
 function advance(){
   const word = cellSpan(cursor.idx);
   const pos = word.indexOf(cursor.idx);
@@ -263,7 +283,7 @@ function nextFillableIndex(i){
 }
 function firstFillableIndex(){ return nextFillableIndex(-1); }
 
-// Strict checks/reveals
+// Checks & reveals
 function checkLetter(){ if (solution[cursor.idx]!=="#") paintCell(cursor.idx, state[cursor.idx]===solution[cursor.idx]); }
 function checkWord(){ for (const i of cellSpan(cursor.idx)) if (solution[i]!=="#") paintCell(i, state[i]===solution[i]); }
 function checkPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#") paintCell(i, state[i]===solution[i]); }
@@ -288,25 +308,24 @@ function startTimer(){
   }, 250);
 }
 
-// Share — emoji grid + time
+// Share
 async function share(){
-  // Build emoji grid like NYT: ⬛ for blocks, 🟩 correct, 🟨 filled wrong, ⬜ empty
   const em=[];
   for (let r=0;r<SIZE;r++){
-    let row=\"\";
+    let row="";
     for (let c=0;c<SIZE;c++){
       const i=idxRC(r,c);
-      if (solution[i]===\"#\") row += \"⬛\";
-      else if (!state[i]) row += \"⬜\";
-      else row += (state[i]===solution[i])?\"🟩\":\"🟨\";
+      if (solution[i]==="#") row+="⬛";
+      else if (!state[i]) row+="⬜";
+      else row += (state[i]===solution[i])?"🟩":"🟨";
     }
     em.push(row);
   }
-  const text = `Mini Crossword — ${puzzle.date}\n${timerEl.textContent}\n` + em.join(\"\\n\");
+  const text = `Mini Crossword — ${puzzle.date}\n${timerEl.textContent}\n` + em.join("\\n");
   try {
     await navigator.clipboard.writeText(text);
-    alert(\"Result copied to clipboard!\");
+    alert("Result copied to clipboard!");
   } catch(e){
-    prompt(\"Copy your result:\", text);
+    prompt("Copy your result:", text);
   }
 }
