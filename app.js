@@ -1,4 +1,4 @@
-// Mini Crossword — vanilla JS NYT-style 5×5
+// Mini Crossword — iPhone keyboard + selection highlight version
 const SIZE = 5;
 const gridEl = document.getElementById("grid");
 const acrossList = document.getElementById("acrossList");
@@ -8,6 +8,7 @@ const titleEl = document.getElementById("puzzleTitle");
 const darkToggle = document.getElementById("darkToggle");
 const keypad = document.getElementById("keypad");
 const keysWrap = keypad.querySelector(".keys");
+const mobileInput = document.getElementById("mobileInput");
 
 const btn = id => document.getElementById(id);
 const actions = {
@@ -28,6 +29,23 @@ let startedAt=null, timerId=0;
 const isLetter = c => /^[A-Za-z]$/.test(c);
 const idxRC = (r,c) => r*SIZE + c;
 const rcFromIdx = idx => [Math.floor(idx/SIZE), idx%SIZE];
+const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+
+// --- iPhone keyboard helpers ---
+function focusMobileInput() {
+  if (!isTouch) return;
+  mobileInput.value = "";
+  mobileInput.focus({ preventScroll: true });
+}
+function placeMobileInputAtCell(idx){
+  if (!isTouch) return;
+  const cell = cells[idx];
+  if (!cell) return;
+  const rect = cell.getBoundingClientRect();
+  const host = gridEl.getBoundingClientRect();
+  mobileInput.style.left = (window.scrollX + host.left + rect.left - host.left + 6) + "px";
+  mobileInput.style.top  = (window.scrollY + host.top  + rect.top  - host.top  + 6) + "px";
+}
 
 // === INIT ====================================================
 (async function init(){
@@ -161,6 +179,7 @@ function wireEvents(){
     if (cell.classList.contains("block")) return;
     cell.addEventListener("click", ()=> { setSelection(i); cells[i].focus(); });
   });
+
   document.addEventListener("keydown",(e)=>{
     if (isLetter(e.key)) { handleInput(e.key.toUpperCase()); e.preventDefault(); return; }
     switch(e.key){
@@ -173,12 +192,22 @@ function wireEvents(){
       case "Tab": e.shiftKey? prevWord(): nextWord(); e.preventDefault(); break;
     }
   });
+
+  mobileInput.addEventListener("input",(e)=>{
+    const ch = mobileInput.value.toUpperCase();
+    if (/^[A-Z]$/.test(ch)) { handleInput(ch); mobileInput.value=""; }
+  });
+  mobileInput.addEventListener("beforeinput",(e)=>{
+    if (e.inputType==="deleteContentBackward"){ backspace(); e.preventDefault(); }
+  });
+
   document.querySelectorAll(".clue").forEach(li=>{
     li.addEventListener("click", ()=> {
       cursor.dir = li.dataset.dir;
       setSelection(parseInt(li.dataset.start,10));
     });
   });
+
   actions.checkLetter.onclick = ()=> checkLetter();
   actions.checkWord.onclick = ()=> checkWord();
   actions.checkPuzzle.onclick = ()=> checkPuzzle();
@@ -197,7 +226,11 @@ function setSelection(idx){
   if (solution[idx]==="#") idx = nextFillableIndex(idx);
   cursor.idx = idx;
   cells.forEach(c=> c.setAttribute("aria-selected","false"));
-  if (idx>=0) cells[idx].setAttribute("aria-selected","true");
+  if (idx>=0){
+    cells[idx].setAttribute("aria-selected","true");
+    placeMobileInputAtCell(idx);
+    focusMobileInput();
+  }
   highlightCurrentWord();
 }
 
@@ -230,102 +263,54 @@ function markActiveClue(){
   if (item) item.classList.add("active");
 }
 
-function handleInput(ch){
-  if (solution[cursor.idx]==="#") return;
-  state[cursor.idx] = ch;
-  renderLetters();
-  advance();
-}
+function handleInput(ch){ if (solution[cursor.idx]==="#") return;
+  state[cursor.idx]=ch; renderLetters(); advance(); }
+function backspace(){ if (solution[cursor.idx]==="#") return;
+  if (state[cursor.idx]) state[cursor.idx]=""; else retreat(); renderLetters(); }
 
-function backspace(){
-  if (solution[cursor.idx]==="#") return;
-  if (state[cursor.idx]) state[cursor.idx] = "";
-  else retreat();
-  renderLetters();
-}
+function move(dr,dc){ const [r,c]=rcFromIdx(cursor.idx);
+  const nr=r+dr, nc=c+dc; if (nr<0||nc<0||nr>=SIZE||nc>=SIZE)return;
+  setSelection(idxRC(nr,nc)); focusMobileInput(); }
 
-function move(dr,dc){
-  const [r,c]=rcFromIdx(cursor.idx);
-  const nr=r+dr, nc=c+dc;
-  if (nr<0||nc<0||nr>=SIZE||nc>=SIZE) return;
-  setSelection(idxRC(nr,nc));
-}
-
-function advance(){
-  const word = cellSpan(cursor.idx);
-  const pos = word.indexOf(cursor.idx);
-  if (pos < word.length-1) setSelection(word[pos+1]); else nextWord();
-}
-function retreat(){
-  const word = cellSpan(cursor.idx);
-  const pos = word.indexOf(cursor.idx);
-  if (pos > 0) setSelection(word[pos-1]);
-}
-function nextWord(){
-  const dir = cursor.dir;
-  for (let i=cursor.idx+1;i<SIZE*SIZE;i++){ if (isWordStart(i,dir)) { setSelection(i); return; } }
-  for (let i=0;i<cursor.idx;i++){ if (isWordStart(i,dir)) { setSelection(i); return; } }
-}
-function prevWord(){
-  const dir = cursor.dir;
-  for (let i=cursor.idx-1;i>=0;i--){ if (isWordStart(i,dir)) { setSelection(i); return; } }
-}
-function isWordStart(i,dir){
-  if (solution[i]==="#") return false;
-  const [r,c]=rcFromIdx(i);
-  if (dir==="across") return c===0 || solution[idxRC(r,c-1)]==="#";
-  return r===0 || solution[idxRC(r-1,c)]==="#";
-}
-function nextFillableIndex(i){
-  for (let k=i+1;k<SIZE*SIZE;k++) if (solution[k]!=="#") return k;
-  for (let k=0;k<i;k++) if (solution[k]!=="#") return k;
-  return -1;
-}
+function advance(){ const word=cellSpan(cursor.idx);
+  const pos=word.indexOf(cursor.idx);
+  if(pos<word.length-1)setSelection(word[pos+1]);else nextWord(); focusMobileInput();}
+function retreat(){ const word=cellSpan(cursor.idx);
+  const pos=word.indexOf(cursor.idx);
+  if(pos>0)setSelection(word[pos-1]); focusMobileInput();}
+function nextWord(){ const dir=cursor.dir;
+  for(let i=cursor.idx+1;i<SIZE*SIZE;i++){if(isWordStart(i,dir)){setSelection(i);focusMobileInput();return;}}
+  for(let i=0;i<cursor.idx;i++){if(isWordStart(i,dir)){setSelection(i);focusMobileInput();return;}}}
+function prevWord(){ const dir=cursor.dir;
+  for(let i=cursor.idx-1;i>=0;i--){if(isWordStart(i,dir)){setSelection(i);focusMobileInput();return;}}}
+function isWordStart(i,dir){ if(solution[i]==="#")return false;
+  const [r,c]=rcFromIdx(i); if(dir==="across")return c===0||solution[idxRC(r,c-1)]==="#";
+  return r===0||solution[idxRC(r-1,c)]==="#"; }
+function nextFillableIndex(i){ for(let k=i+1;k<SIZE*SIZE;k++)if(solution[k]!=="#")return k;
+  for(let k=0;k<i;k++)if(solution[k]!=="#")return k; return -1; }
 function firstFillableIndex(){ return nextFillableIndex(-1); }
 
-// Checks & reveals
-function checkLetter(){ if (solution[cursor.idx]!=="#") paintCell(cursor.idx, state[cursor.idx]===solution[cursor.idx]); }
-function checkWord(){ for (const i of cellSpan(cursor.idx)) if (solution[i]!=="#") paintCell(i, state[i]===solution[i]); }
-function checkPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#") paintCell(i, state[i]===solution[i]); }
-function revealLetter(){ if (solution[cursor.idx]!=="#"){ state[cursor.idx]=solution[cursor.idx]; renderLetters(); } }
-function revealWord(){ for (const i of cellSpan(cursor.idx)) if (solution[i]!=="#") state[i]=solution[i]; renderLetters(); }
-function revealPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#") state[i]=solution[i]; renderLetters(); }
-function resetPuzzle(){ for (let i=0;i<SIZE*SIZE;i++) if (solution[i]!=="#"){ state[i]=""; cells[i].style.background=""; } renderLetters(); }
+function checkLetter(){ if(solution[cursor.idx]!=="#")paintCell(cursor.idx,state[cursor.idx]===solution[cursor.idx]); }
+function checkWord(){ for(const i of cellSpan(cursor.idx))if(solution[i]!=="#")paintCell(i,state[i]===solution[i]); }
+function checkPuzzle(){ for(let i=0;i<SIZE*SIZE;i++)if(solution[i]!=="#")paintCell(i,state[i]===solution[i]); }
+function revealLetter(){ if(solution[cursor.idx]!=="#"){state[cursor.idx]=solution[cursor.idx];renderLetters();} }
+function revealWord(){ for(const i of cellSpan(cursor.idx))if(solution[i]!=="#")state[i]=solution[i];renderLetters(); }
+function revealPuzzle(){ for(let i=0;i<SIZE*SIZE;i++)if(solution[i]!=="#")state[i]=solution[i];renderLetters(); }
+function resetPuzzle(){ for(let i=0;i<SIZE*SIZE;i++)if(solution[i]!=="#"){state[i]="";cells[i].style.background="";}renderLetters(); }
 
-function paintCell(i, ok){
-  cells[i].style.background = ok ? "var(--correct)" : "var(--wrong)";
-  setTimeout(()=>{ cells[i].style.background=""; }, 260);
-}
+function paintCell(i,ok){ cells[i].style.background=ok?"var(--correct)":"var(--wrong)";
+  setTimeout(()=>{cells[i].style.background="";},260); }
 
-// Timer
-function startTimer(){
-  startedAt = Date.now();
-  timerId = setInterval(()=>{
-    const s = Math.floor((Date.now()-startedAt)/1000);
-    const m = Math.floor(s/60);
-    const ss = String(s%60).padStart(2,"0");
-    timerEl.textContent = `${m}:${ss}`;
-  }, 250);
-}
+function startTimer(){ startedAt=Date.now();
+  timerId=setInterval(()=>{const s=Math.floor((Date.now()-startedAt)/1000);
+  const m=Math.floor(s/60);const ss=String(s%60).padStart(2,"0");
+  timerEl.textContent=`${m}:${ss}`;},250); }
 
-// Share
-async function share(){
-  const em=[];
-  for (let r=0;r<SIZE;r++){
-    let row="";
-    for (let c=0;c<SIZE;c++){
-      const i=idxRC(r,c);
-      if (solution[i]==="#") row+="⬛";
-      else if (!state[i]) row+="⬜";
-      else row += (state[i]===solution[i])?"🟩":"🟨";
-    }
-    em.push(row);
-  }
-  const text = `Mini Crossword — ${puzzle.date}\n${timerEl.textContent}\n` + em.join("\\n");
-  try {
-    await navigator.clipboard.writeText(text);
-    alert("Result copied to clipboard!");
-  } catch(e){
-    prompt("Copy your result:", text);
-  }
+async function share(){ const em=[];
+  for(let r=0;r<SIZE;r++){let row="";for(let c=0;c<SIZE;c++){const i=idxRC(r,c);
+    if(solution[i]==="#")row+="⬛";else if(!state[i])row+="⬜";
+    else row+=(state[i]===solution[i])?"🟩":"🟨";}em.push(row);}
+  const text=`Mini Crossword — ${puzzle.date}\n${timerEl.textContent}\n`+em.join("\n");
+  try{await navigator.clipboard.writeText(text);alert("Result copied to clipboard!");}
+  catch(e){prompt("Copy your result:",text);}
 }
