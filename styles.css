@@ -1,40 +1,256 @@
-:root{
-  --bg:#ffffff; --fg:#111; --muted:#666; --primary:#1a73e8;
-  --cell:#fff; --cell-border:#000; --block:#000; --highlight:#ffe58f;
-  --select:#b3d4fc; --correct:#b6f2c1; --wrong:#ffd0d0;
+/* ====== Core Layout ====== */
+:root {
+  --bg: #ffffff;
+  --fg: #111111;
+  --grid-bg: #ffffff;
+  --cell-border: #000000;
+  --highlight: #ffecb3;
+  --select: #dbeafe;
+  --primary: #2b6cb0;
+  --correct: #a7f3d0;
+  --wrong: #fecaca;
+  --shadow: rgba(0,0,0,0.1);
 }
-html.dark{
-  --bg:#111; --fg:#eee; --muted:#bbb; --primary:#8ab4f8;
-  --cell:#1a1a1a; --cell-border:#555; --block:#000; --highlight:#3a3a18;
-  --select:#2a4365; --correct:#244b2a; --wrong:#5a1e1e;
+
+.dark {
+  --bg: #121212;
+  --fg: #f5f5f5;
+  --grid-bg: #1e1e1e;
+  --cell-border: #888;
+  --highlight: #333a3f;
+  --select: #334155;
+  --primary: #60a5fa;
+  --correct: #047857;
+  --wrong: #b91c1c;
+  --shadow: rgba(255,255,255,0.08);
 }
-*{box-sizing:border-box}
-body{margin:0; font:16px/1.35 system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial}
-.topbar{display:flex; justify-content:space-between; align-items:center; padding:.6rem .8rem; border-bottom:1px solid #ddd; background:var(--bg); color:var(--fg); position:sticky; top:0; z-index:10}
-.brand{font-weight:800; letter-spacing:.3px}
-.controls{display:flex; gap:.6rem; align-items:center}
-.timer{min-width:4ch; text-align:right}
-.layout{display:grid; grid-template-columns:minmax(260px,420px) minmax(260px,680px); gap:1rem; padding:1rem; background:var(--bg); color:var(--fg)}
-.grid-wrap{display:flex; flex-direction:column; gap:.75rem; align-items:center}
-.grid{display:grid; width:min(92vw, 420px); aspect-ratio:1/1; border:2px solid var(--fg); background:var(--bg)}
-.cell{position:relative; border:1px solid var(--cell-border); background:var(--cell); display:flex; justify-content:center; align-items:center; font-weight:700; font-size:1.6rem; text-transform:uppercase; cursor:pointer; user-select:none; outline:none}
-.cell[aria-selected="true"]{background:var(--select)}
-.cell.highlight{background:var(--highlight)}
-.cell.block{background:var(--fg); border-color:var(--fg)}
-.num{position:absolute; top:1px; left:2px; font-size:.72rem; color:var(--muted); font-weight:800}
-.actions{display:grid; grid-template-columns:repeat(4,1fr); gap:.5rem; width:100%}
-.actions button, .controls button{padding:.55rem .6rem; border:1px solid #ccc; background:#f7f7f7; border-radius:.5rem; cursor:pointer}
-.actions button:hover, .controls button:hover{border-color:var(--primary)}
-.keypad{width:100%}
-.keypad .keys{display:grid; grid-template-columns:repeat(10,1fr); gap:.3rem}
-.keypad button{padding:.6rem 0; font-weight:700}
-.clues .row{display:flex; gap:1rem; align-items:flex-start}
-.clues .col{flex:1 1 0}
-.clue-list{list-style:none; padding:0; margin:.25rem 0 1rem 0}
-.clue{padding:.35rem .45rem; border-radius:.35rem; cursor:pointer}
-.clue.active{background:var(--select)}
-.foot{padding:1rem; text-align:center; color:var(--muted)}
-@media (max-width: 900px){
-  .layout{grid-template-columns:1fr}
-  .actions{grid-template-columns:repeat(2, 1fr)}
+
+/* Basic Reset */
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* ====== Header ====== */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--cell-border);
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.2rem;
+}
+
+.timer {
+  font-variant-numeric: tabular-nums;
+  min-width: 4ch;
+  text-align: right;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* ====== Main Layout ====== */
+.layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem;
+  gap: 1.5rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.grid-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ====== Crossword Grid ====== */
+.grid {
+  display: grid;
+  background: var(--grid-bg);
+  box-shadow: 0 4px 10px var(--shadow);
+  border: 2px solid var(--cell-border);
+  aspect-ratio: 1;
+  width: min(90vw, 400px);
+  user-select: none;
+}
+
+.cell {
+  border: 1px solid var(--cell-border);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: clamp(1rem, 2vw, 1.4rem);
+  background: var(--grid-bg);
+  transition: background 0.15s ease;
+}
+
+.cell .num {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  font-size: 0.6rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.cell.block {
+  background: #000000;
+  color: #000000;
+}
+
+/* highlight active word */
+.cell.highlight {
+  background: var(--highlight);
+}
+
+/* clearly show selected cell */
+.cell[aria-selected="true"] {
+  outline: 3px solid var(--primary);
+  outline-offset: -3px;
+  background: var(--select);
+}
+
+/* ====== Buttons & Actions ====== */
+.actions {
+  margin-top: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+}
+
+.actions button {
+  border: 1px solid var(--cell-border);
+  background: var(--bg);
+  color: var(--fg);
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.actions button:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* ====== Keypad ====== */
+.keypad {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 260px;
+  gap: 0.3rem;
+  margin-top: 1rem;
+}
+
+.keypad button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 4px;
+  border: 1px solid var(--cell-border);
+  background: var(--bg);
+  color: var(--fg);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.keypad button:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* Hide keypad on iPhone/iPad (we use native keyboard) */
+@supports (-webkit-touch-callout: none) {
+  .keypad { display: none !important; }
+}
+
+/* ====== Clues Section ====== */
+.clues {
+  width: 100%;
+  max-width: 800px;
+}
+
+.clues .row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.clue-list {
+  padding-left: 1.5rem;
+  list-style: none;
+}
+
+.clue-list li {
+  margin: 0.3rem 0;
+  line-height: 1.3;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+}
+
+.clue-list li:hover {
+  background: var(--highlight);
+}
+
+.clue-list li.active {
+  background: var(--select);
+  font-weight: 600;
+}
+
+/* ====== Footer ====== */
+.foot {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* ====== iPhone Hidden Input ====== */
+#mobileInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 1px;
+  height: 1px;
+  left: -9999px;
+  top: -9999px;
+}
+
+/* ====== Responsive Adjustments ====== */
+@media (max-width: 600px) {
+  .grid {
+    width: 90vw;
+  }
+  .clues .row {
+    flex-direction: column;
+  }
 }
