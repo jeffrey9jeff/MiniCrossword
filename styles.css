@@ -1,58 +1,114 @@
-/* ====== Core Layout ====== */
+/* ==========================================================================
+   Mini Crossword - Full Stylesheet
+   - NYT-ish look
+   - Dark mode
+   - Clear selected cell
+   - iPhone keyboard support (tiny visible input)
+   ========================================================================== */
+
+/* ------------------------------
+   Design Tokens
+   ------------------------------ */
 :root {
   --bg: #ffffff;
   --fg: #111111;
   --grid-bg: #ffffff;
+
   --cell-border: #000000;
-  --highlight: #ffecb3;
-  --select: #dbeafe;
-  --primary: #2b6cb0;
-  --correct: #a7f3d0;
-  --wrong: #fecaca;
-  --shadow: rgba(0,0,0,0.1);
+  --highlight: #ffecb3;       /* active word highlight */
+  --select: #dbeafe;          /* selected cell background */
+  --primary: #2b6cb0;         /* selected cell outline */
+
+  --correct: #a7f3d0;         /* check feedback (OK) */
+  --wrong: #fecaca;           /* check feedback (NG) */
+
+  --shadow: rgba(0,0,0,0.08);
+  --muted: #666666;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
 }
 
+/* Dark theme (toggled by JS using <html class="dark">) */
 .dark {
   --bg: #121212;
   --fg: #f5f5f5;
   --grid-bg: #1e1e1e;
-  --cell-border: #888;
+
+  --cell-border: #8c8c8c;
   --highlight: #333a3f;
   --select: #334155;
   --primary: #60a5fa;
+
   --correct: #047857;
   --wrong: #b91c1c;
-  --shadow: rgba(255,255,255,0.08);
+
+  --shadow: rgba(255,255,255,0.06);
+  --muted: #bdbdbd;
 }
 
-/* Basic Reset */
-body, html {
+/* ------------------------------
+   Global Resets
+   ------------------------------ */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
   margin: 0;
   padding: 0;
-  font-family: system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
-  height: 100%;
-  width: 100%;
-  overflow-x: hidden;
 }
 
-/* ====== Header ====== */
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ------------------------------
+   Header
+   ------------------------------ */
 .topbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
-  border-bottom: 1px solid var(--cell-border);
-  background: var(--bg);
+  gap: .75rem;
+
   position: sticky;
   top: 0;
   z-index: 10;
+
+  padding: .65rem 1rem;
+  background: var(--bg);
+  border-bottom: 1px solid var(--cell-border);
 }
 
 .brand {
-  font-weight: 700;
-  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: .2px;
+  font-size: 1.15rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.controls button {
+  border: 1px solid var(--cell-border);
+  background: var(--bg);
+  color: var(--fg);
+  padding: .4rem .55rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.controls button:hover {
+  background: var(--select);
+  border-color: var(--primary);
 }
 
 .timer {
@@ -61,160 +117,207 @@ body, html {
   text-align: right;
 }
 
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* ====== Main Layout ====== */
+/* ------------------------------
+   Main Layout
+   ------------------------------ */
 .layout {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(260px, 420px) minmax(260px, 680px);
+  gap: 1.25rem;
   padding: 1rem;
-  gap: 1.5rem;
-  max-width: 900px;
   margin: 0 auto;
+  align-items: start;
+  max-width: 1200px;
 }
 
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: 1fr;
+    max-width: 820px;
+  }
+}
+
+/* Container holding grid + actions + keypad */
 .grid-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: .75rem;
 }
 
-/* ====== Crossword Grid ====== */
+/* ------------------------------
+   Crossword Grid
+   ------------------------------ */
 .grid {
   display: grid;
-  background: var(--grid-bg);
-  box-shadow: 0 4px 10px var(--shadow);
+  /* columns count is set by JS: grid-template-columns: repeat(5, 1fr) */
+  width: min(92vw, 420px);
+  aspect-ratio: 1 / 1;
   border: 2px solid var(--cell-border);
-  aspect-ratio: 1;
-  width: min(90vw, 400px);
+  background: var(--grid-bg);
+  box-shadow: 0 10px 20px var(--shadow);
   user-select: none;
+  touch-action: manipulation;
 }
 
 .cell {
-  border: 1px solid var(--cell-border);
   position: relative;
   display: flex;
-  align-items: center;
   justify-content: center;
-  font-weight: 600;
-  font-size: clamp(1rem, 2vw, 1.4rem);
+  align-items: center;
+
+  border: 1px solid var(--cell-border);
   background: var(--grid-bg);
-  transition: background 0.15s ease;
+  color: var(--fg);
+
+  font-weight: 700;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  line-height: 1;
+  text-transform: uppercase;
+
+  cursor: pointer;
+  outline: none;
+  transition: background .12s ease, outline-color .12s ease;
 }
 
+/* Cell number (clue number) */
 .cell .num {
   position: absolute;
   top: 2px;
   left: 3px;
-  font-size: 0.6rem;
-  font-weight: 500;
-  color: var(--fg);
+  font-size: .68rem;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--muted);
+  pointer-events: none;
 }
 
+/* Block (black square) */
 .cell.block {
-  background: #000000;
-  color: #000000;
+  background: #000;
+  border-color: #000;
+  color: #000;
+  cursor: default;
 }
 
-/* highlight active word */
+/* Active word highlight (soft) */
 .cell.highlight {
   background: var(--highlight);
 }
 
-/* clearly show selected cell */
+/* Strong selected cell ring */
 .cell[aria-selected="true"] {
   outline: 3px solid var(--primary);
   outline-offset: -3px;
   background: var(--select);
 }
 
-/* ====== Buttons & Actions ====== */
+/* ------------------------------
+   Actions Row
+   ------------------------------ */
 .actions {
-  margin-top: 1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .5rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+@media (max-width: 420px) {
+  .actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .actions button {
+  padding: .55rem .6rem;
   border: 1px solid var(--cell-border);
   background: var(--bg);
   color: var(--fg);
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  box-shadow: 0 2px 6px var(--shadow);
 }
-
 .actions button:hover {
-  background: var(--primary);
-  color: #fff;
+  background: var(--select);
+  border-color: var(--primary);
 }
 
-/* ====== Keypad ====== */
+/* ------------------------------
+   On-screen Keypad
+   ------------------------------ */
 .keypad {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  max-width: 260px;
-  gap: 0.3rem;
-  margin-top: 1rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+.keypad .keys {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: .35rem;
 }
 
 .keypad button {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 4px;
+  padding: .6rem 0;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--cell-border);
   background: var(--bg);
   color: var(--fg);
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease;
+  box-shadow: 0 2px 6px var(--shadow);
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
 }
-
 .keypad button:hover {
   background: var(--primary);
   color: #fff;
+  border-color: var(--primary);
 }
 
-/* Hide keypad on iPhone/iPad (we use native keyboard) */
+/* On iOS we prefer the native keyboard (JS hides keypad via @supports) */
 @supports (-webkit-touch-callout: none) {
   .keypad { display: none !important; }
 }
 
-/* ====== Clues Section ====== */
+/* ------------------------------
+   Clues
+   ------------------------------ */
 .clues {
   width: 100%;
-  max-width: 800px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.clues h2 {
+  margin: .2rem 0 .4rem 0;
+  font-size: 1.05rem;
 }
 
 .clues .row {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 2rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+}
+
+@media (max-width: 960px) {
+  .clues .row {
+    grid-template-columns: 1fr;
+  }
 }
 
 .clue-list {
-  padding-left: 1.5rem;
   list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .clue-list li {
-  margin: 0.3rem 0;
-  line-height: 1.3;
+  padding: .25rem .4rem;
+  border-radius: var(--radius-sm);
+  margin: .12rem 0;
   cursor: pointer;
-  transition: background 0.15s ease;
-  border-radius: 4px;
-  padding: 0.1rem 0.3rem;
+  line-height: 1.3;
+  transition: background .12s ease, color .12s ease;
 }
 
 .clue-list li:hover {
@@ -223,34 +326,61 @@ body, html {
 
 .clue-list li.active {
   background: var(--select);
-  font-weight: 600;
+  font-weight: 700;
 }
 
-/* ====== Footer ====== */
+/* ------------------------------
+   Footer
+   ------------------------------ */
 .foot {
-  margin-top: 2rem;
+  padding: 1rem;
   text-align: center;
-  font-size: 0.9rem;
-  color: #666;
+  color: var(--muted);
 }
 
-/* ====== iPhone Hidden Input ====== */
+/* ------------------------------
+   iPhone Keyboard Trigger Input
+   NOTE:
+   - iOS requires the element to be visible and in-viewport to show keyboard.
+   - We keep it tiny and nearly transparent; JS positions it over the selected cell.
+   ------------------------------ */
 #mobileInput {
   position: absolute;
-  opacity: 0;
-  pointer-events: none;
   width: 1px;
   height: 1px;
-  left: -9999px;
-  top: -9999px;
+
+  /* must not be fully hidden or off-screen for iOS to show keyboard */
+  opacity: 0.01;
+  background: transparent;
+  color: transparent;
+
+  border: 0;
+  padding: 0;
+  margin: 0;
+
+  z-index: 10; /* stay above grid cells to receive focus */
 }
 
-/* ====== Responsive Adjustments ====== */
+/* ------------------------------
+   Utility: Feedback Colors via Inline Styles
+   (JS sets background to var(--correct)/var(--wrong) briefly)
+   ------------------------------ */
+/* nothing needed here; colors defined in tokens */
+
+/* ------------------------------
+   Accessibility helpers (optional)
+   ------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .cell,
+  .actions button,
+  .keypad button {
+    transition: none !important;
+  }
+}
+
+/* ------------------------------
+   Extra Responsive Tweaks
+   ------------------------------ */
 @media (max-width: 600px) {
-  .grid {
-    width: 90vw;
-  }
-  .clues .row {
-    flex-direction: column;
-  }
+  .grid { width: 90vw; }
 }
