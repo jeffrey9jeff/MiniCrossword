@@ -1,0 +1,26 @@
+{
+  "title": "Mini — QTIP start",
+  "date": "2025-10-13",
+  "size": 5,
+  "grid": [
+    ["#", "Q", "T", "I", "P"],
+    ["B", "U", "R", "N", "S"],
+    ["B", "E", "A", "K", "S"],
+    ["Q", "U", "I", "E", "T"],
+    ["S", "E", "N", "D", "#"]
+  ],
+  "across": [
+    { "num": 1, "start": 1,  "len": 4, "answer": "QTIP",  "text": "Cotton swab brand" },
+    { "num": 5, "start": 5,  "len": 5, "answer": "BURNS", "text": "Hurts, as a wound" },
+    { "num": 6, "start": 10, "len": 5, "answer": "BEAKS", "text": "Birds' bills" },
+    { "num": 7, "start": 15, "len": 5, "answer": "QUIET", "text": "Silent" },
+    { "num": 8, "start": 20, "len": 4, "answer": "SEND",  "text": "Transmit" }
+  ],
+  "down": [
+    { "num": 1, "start": 1, "len": 5, "answer": "QUEUE", "text": "Line of people" },
+    { "num": 2, "start": 2, "len": 5, "answer": "TRAIN", "text": "Locomotive and cars" },
+    { "num": 3, "start": 3, "len": 5, "answer": "INKED", "text": "Signed, as a contract" },
+    { "num": 4, "start": 4, "len": 4, "answer": "PSST",  "text": "Attention-getting whisper" },
+    { "num": 5, "start": 5, "len": 4, "answer": "BBQS",  "text": "Cookouts, informally" }
+  ]
+}
