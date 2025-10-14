@@ -1,0 +1,26 @@
+{
+  "title": "Mini — FOIL start",
+  "date": "2025-10-14",
+  "size": 5,
+  "grid": [
+    ["F", "O", "I", "L", "#"],
+    ["A", "N", "N", "O", "Y"],
+    ["L", "E", "A", "V", "E"],
+    ["L", "A", "N", "E", "S"],
+    ["S", "L", "E", "D", "#"]
+  ],
+  "across": [
+    { "num": 1, "start": 0, "len": 4, "answer": "FOIL",  "text": "Thwart or metal wrap" },
+    { "num": 5, "start": 5, "len": 5, "answer": "ANNOY", "text": "Irritate" },
+    { "num": 7, "start": 10, "len": 5, "answer": "LEAVE", "text": "Go away" },
+    { "num": 8, "start": 15, "len": 5, "answer": "LANES", "text": "Bowling areas" },
+    { "num": 9, "start": 20, "len": 4, "answer": "SLED",  "text": "Winter downhill vehicle" }
+  ],
+  "down": [
+    { "num": 1, "start": 0, "len": 5, "answer": "FALLS", "text": "Niagara, e.g." },
+    { "num": 2, "start": 1, "len": 5, "answer": "ONION", "text": "Layered vegetable" },
+    { "num": 3, "start": 2, "len": 5, "answer": "INANE", "text": "Silly" },
+    { "num": 4, "start": 3, "len": 5, "answer": "LOVES", "text": "Admires deeply" },
+    { "num": 6, "start": 9, "len": 4, "answer": "YEES",  "text": "Old-time affirmative plural (archaic fill)" }
+  ]
+}
