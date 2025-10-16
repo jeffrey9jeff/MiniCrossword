@@ -1,0 +1,26 @@
+{
+  "title": "Mini — HOOF start",
+  "date": "2025-10-15",
+  "size": 5,
+  "grid": [
+    ["H", "O", "O", "F", "#"],
+    ["A", "M", "P", "L", "E"],
+    ["R", "A", "T", "E", "D"],
+    ["S", "H", "I", "E", "D"],
+    ["H", "A", "N", "K", "Y"]
+  ],
+  "across": [
+    { "num": 1, "start": 0,  "len": 4, "answer": "HOOF",  "text": "Horse’s foot" },
+    { "num": 5, "start": 5,  "len": 5, "answer": "AMPLE", "text": "More than enough" },
+    { "num": 7, "start": 10, "len": 5, "answer": "RATED", "text": "Reviewed and scored" },
+    { "num": 8, "start": 15, "len": 5, "answer": "SHIED", "text": "Flinched" },
+    { "num": 9, "start": 20, "len": 5, "answer": "HANKY", "text": "Pocket tissue, informally" }
+  ],
+  "down": [
+    { "num": 1, "start": 0, "len": 5, "answer": "HARSH", "text": "Severe" },
+    { "num": 2, "start": 1, "len": 5, "answer": "OMAHA", "text": "Largest city in Nebraska" },
+    { "num": 3, "start": 2, "len": 5, "answer": "OPTIN", "text": "Agree to receive emails, say" },
+    { "num": 4, "start": 3, "len": 5, "answer": "FLEEK", "text": "On ___ (slang for excellent)" },
+    { "num": 6, "start": 9, "len": 4, "answer": "EDDY",  "text": "Swirling current" }
+  ]
+}
