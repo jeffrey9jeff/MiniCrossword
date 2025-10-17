@@ -1,1 +1,26 @@
-
+{
+  "title": "Mini — STEVE start",
+  "date": "2025-10-16",
+  "size": 5,
+  "grid": [
+    ["S", "T", "E", "V", "E"],
+    ["H", "O", "S", "E", "S"],
+    ["O", "N", "S", "E", "T"],
+    ["R", "E", "A", "R", "#"],
+    ["T", "R", "Y", "#", "#"]
+  ],
+  "across": [
+    { "num": 1, "start": 0,  "len": 5, "answer": "STEVE", "text": "Common first name" },
+    { "num": 6, "start": 5,  "len": 5, "answer": "HOSES", "text": "Garden spray tools" },
+    { "num": 7, "start": 10, "len": 5, "answer": "ONSET", "text": "Beginning" },
+    { "num": 8, "start": 15, "len": 4, "answer": "REAR",  "text": "Back" },
+    { "num": 9, "start": 20, "len": 3, "answer": "TRY",   "text": "Make an attempt" }
+  ],
+  "down": [
+    { "num": 1, "start": 0, "len": 5, "answer": "SHORT", "text": "Not tall" },
+    { "num": 2, "start": 1, "len": 5, "answer": "TONER", "text": "Printer cartridge type" },
+    { "num": 3, "start": 2, "len": 5, "answer": "ESSAY", "text": "School paper" },
+    { "num": 4, "start": 3, "len": 4, "answer": "VEER",  "text": "Swerve" },
+    { "num": 5, "start": 4, "len": 3, "answer": "EST",   "text": "N.Y.C. time zone (abbr.)" }
+  ]
+}
