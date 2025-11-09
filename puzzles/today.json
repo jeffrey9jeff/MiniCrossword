@@ -1,26 +1,26 @@
 {
-  "title": "Mini — MCS start",
-  "date": "2025-10-17",
+  "title": "Mini — GAS/DONT",
+  "date": "2025-10-19",
   "size": 5,
   "grid": [
-    ["M", "C", "S", "#", "#"],
-    ["E", "L", "A", "T", "E"],
-    ["L", "A", "B", "E", "L"],
-    ["D", "R", "E", "A", "M"],
-    ["#", "A", "R", "M", "S"]
+    ["#", "#", "G", "A", "S"],
+    ["#", "D", "O", "N", "T"],
+    ["J", "E", "N", "G", "A"],
+    ["E", "C", "O", "L", "I"],
+    ["T", "O", "W", "E", "R"]
   ],
   "across": [
-    { "num": 1, "start": 0,  "len": 3, "answer": "MCS",   "text": "Stage hosts, briefly" },
-    { "num": 4, "start": 5,  "len": 5, "answer": "ELATE", "text": "Make very happy" },
-    { "num": 7, "start": 10, "len": 5, "answer": "LABEL", "text": "Sticker" },
-    { "num": 8, "start": 15, "len": 5, "answer": "DREAM", "text": "Sleep vision" },
-    { "num": 9, "start": 21, "len": 4, "answer": "ARMS",  "text": "Upper limbs" }
+    { "num": 1, "start": 2,  "len": 3, "answer": "GAS",   "text": "Fuel for many cars" },
+    { "num": 4, "start": 6,  "len": 4, "answer": "DONT",  "text": "Negative contraction" },
+    { "num": 5, "start": 10, "len": 5, "answer": "JENGA", "text": "Block-stacking game" },
+    { "num": 6, "start": 15, "len": 5, "answer": "ECOLI", "text": "Bacterium checked for in food" },
+    { "num": 7, "start": 20, "len": 5, "answer": "TOWER", "text": "Tall structure" }
   ],
   "down": [
-    { "num": 1, "start": 0, "len": 4, "answer": "MELD",  "text": "Fuse together" },
-    { "num": 2, "start": 1, "len": 5, "answer": "CLARA", "text": "___ Barton of the Red Cross" },
-    { "num": 3, "start": 2, "len": 5, "answer": "SABER", "text": "Fencing sword" },
-    { "num": 5, "start": 8, "len": 4, "answer": "TEAM",  "text": "Group on a field" },
-    { "num": 6, "start": 9, "len": 4, "answer": "ELMS",  "text": "Shade trees" }
+    { "num": 1, "start": 2,  "len": 5, "answer": "GONOW", "text": "Urgent directive: \"___!\"" },
+    { "num": 2, "start": 3,  "len": 5, "answer": "ANGLE", "text": "Corner, geometrically" },
+    { "num": 3, "start": 4,  "len": 5, "answer": "STAIR", "text": "One step in a flight" },
+    { "num": 4, "start": 6,  "len": 4, "answer": "DECO",  "text": "Art ___ (style)" },
+    { "num": 5, "start": 10, "len": 3, "answer": "JET",   "text": "Private plane" }
   ]
 }
